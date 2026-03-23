@@ -3,6 +3,9 @@ from sqlalchemy import create_engine
 from spatial_weights import contiguity_weights, knn_weights, distance_weights
 from visualization import visualize_neighbors
 from moran import calculate_global_morans_I
+from esda.moran import Moran_Local
+import os
+from visualization import visualize_local_moran
 
 # Database credentials
 host = "localhost"
@@ -30,14 +33,29 @@ w = contiguity_weights(gdf)
 
 # visualize_neighbors(gdf, w)
 
-attribute = "ass_ass_va"
-moran_I, p_value = calculate_global_morans_I(gdf, w, attribute)
+for attribute in ["ass_ass_va", "ass_market"]:
+    moran_I, p_value = calculate_global_morans_I(gdf, w, attribute)
+    print(f"Global Moran's I ({attribute}):, {moran_I:.4f}")
+    print(f"p-value ({attribute}): {p_value:.4f}")
 
-print("Global Moran's I (assessed value):", moran_I)
-print("p-value:", p_value)
+local = Moran_Local(gdf["ass_ass_va"], w)
 
-attribute = "ass_market"
-moran_I, p_value = calculate_global_morans_I(gdf, w, attribute)
+gdf["local_I"] = local.Is
+gdf["p_value"] = local.p_sim
 
-print("Global Moran's I (market value):", moran_I)
-print("p-value:", p_value)
+alpha = 0.05
+gdf["cluster"] = "Not Significant" 
+
+gdf.loc[(gdf["local_I"] > 0) & (gdf["p_value"] < alpha), "cluster"] = "Hotspot" 
+gdf.loc[(gdf["local_I"] < 0) & (gdf["p_value"] < alpha), "cluster"] = "Coldspot" 
+
+os.makedirs("output", exist_ok=True) 
+
+gdf.to_file( 
+            "output/spatial_clusters.geojson", 
+            driver="GeoJSON" 
+) 
+
+print("Saved: output/spatial_clusters.geojson")
+
+visualize_local_moran(gdf)

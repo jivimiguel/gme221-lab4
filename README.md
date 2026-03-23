@@ -1,5 +1,16 @@
 # GmE 221 - Laboratory Exercise 4: Spatial Statistics Autocorrelation and Cluster Detection
 ## Overview
+The focus of this laboratory is to evaluate spatial autocorrelation in parcel‑level valuation data using both Global Moran’s I and Local Moran’s I. The analysis is performed entirely in Python using GeoPandas, PySAL, Matplotlib, and SQLAlchemy, with PostGIS serving as the storage and retrieval environment for spatial data.
+
+The workflow includes:
+- Retrieving parcel geometries and valuation attributes from PostGIS
+- Constructing spatial weights matrices (Contiguity, KNN, and Distance‑based)
+- Computing Global Moran’s I to assess overall clustering
+- Computing Local Moran’s I to identify hotspots, coldspots, and nonsignificant parcels
+- Exporting cluster results to GeoJSON for QGIS visualization
+- Visualizing spatial weights and local clusters using Matplotlib
+
+The outputs of this analysis support understanding of how spatial processes and valuation patterns behave across the study area, providing insights into clustering behavior and the influence of neighborhood definitions.
 
 ---
 
@@ -32,3 +43,14 @@ Finally, visualizing spatial weights before running Moran’s I is essential bec
 
 ### Global Autocorrelation
 Computing Global Moran’s I allowed me to measure the overall spatial autocorrelation present in the parcel dataset. A positive Moran’s I indicates that similar values, such as high or low assessed values, tend to cluster together, while a value near zero suggests a more random pattern. The p‑value is essential because it tells me whether the observed pattern is statistically significant or could have occurred by chance. When comparing the two attributes `assessed value` and `market value` I noticed that each produced different Moran’s I results, which makes sense because these variables reflect different economic factors and therefore have different spatial behaviors. Moran’s I also depends on the spatial weights matrix, which defines how parcels are spatially related, and the attribute values themselves. Without a correct neighborhood definition, the autocorrelation results would be misleading because the measure relies on both spatial structure and attribute variation.
+
+### Interpreting Local Spatial Autocorrelation
+Computing `Local Moran’s I` allowed me to see how spatial clustering actually behaves across the study area. Unlike the global statistic, which only tells me whether clustering exists overall, the local analysis identified the exact parcels forming statistically significant `hotspots` and `coldspots`. Based on the resulting map, `hotspots` appear prominently in the central and southern sections of the subdivision, where many adjacent parcels show consistently high assessed values. These red clusters indicate areas where higher-value parcels reinforce each other spatially. In contrast, `coldspots` form a large, coherent block along the western boundary and smaller pockets on the eastern edge. These blue areas represent parcels where low values tend to cluster together. Meanwhile, most of the interior blocks, especially in the northern and middle neighborhoods, show no significant autocorrelation and remain classified as `Not Significant`.
+
+The spatial pattern shown in the map highlights clear geographic differences across the area. The large coldspot zone on the left side suggests a lower-value cluster that is spatially consistent, possibly due to land use, development age, or parcel size. The hotspot zones, which dominate the central and southeastern portions, align with areas that appear to be more developed or systematically higher in value. The map also reveals some interesting transitions where hotspot clusters border nonsignificant zones, showing areas where parcel values shift between stronger and weaker spatial influence.
+
+I also noticed how sensitive the results were to the spatial weights method used. With contiguity weights, the clusters aligned cleanly with the actual block and parcel boundaries, producing compact and realistic hotspot and coldspot shapes that match the subdivision layout. When experimenting with KNN or distance-based weights earlier, the clusters tended to stretch or connect across areas that did not share boundaries, which produced results that felt less natural for parcel-level data. This confirmed that contiguity weights were the most appropriate choice for this dataset, since parcel influence is best represented by shared boundaries rather than arbitrary distance cutoffs or fixed numbers of nearest neighbors.
+
+The choice of attribute also plays an important role. The map shown reflects the spatial clustering of the assessed value attribute, and if I were to repeat the analysis for market value, I would expect the clusters to shift. These two value metrics represent different valuation processes, and Local Moran’s I helps highlight how their spatial distributions differ in real space. This reinforces that selecting the appropriate variable is just as important as selecting the correct spatial weights.
+
+Finally, this part of the lab showed me why visualization is essential before interpreting any spatial statistical output. Seeing the clusters mapped out exposes possible issues such as overconnected weights, sparse neighborhoods, or unexpected patterns. Without the map, I might have misinterpreted the numeric results or overlooked spatial structures that only become obvious when visualized. The Local Moran’s I map makes it easier to understand the geographic meaning behind hotspots and coldspots, ensuring that the analysis reflects actual spatial processes rather than errors in configuration or assumptions.

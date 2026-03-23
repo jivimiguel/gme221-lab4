@@ -31,3 +31,30 @@ def visualize_neighbors(gdf, weights_obj):
     plt.title("Spatial Weights Graph")
     plt.legend()
     plt.show()
+    
+def visualize_local_moran(gdf):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    colors = {
+        "Hotspot": "red",
+        "Coldspot": "blue",
+        "Not Significant": "lightgrey"
+    }
+
+    for cluster, color in colors.items():
+        subset = gdf[gdf["cluster"] == cluster]
+        if not subset.empty:
+            subset.plot(
+                ax=ax,
+                color=color,
+                edgecolor="black",
+                linewidth=0.2,
+                label=cluster
+            )
+            
+    plt.title("Local Moran's I Cluster Map")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
